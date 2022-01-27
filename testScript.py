@@ -3,8 +3,6 @@ import http.client
 import json
 import polyline
 import time
-
-
 from flask import Flask
 
 app = Flask(__name__)
@@ -70,16 +68,18 @@ def doAllStravaStuff():
 
     for activity in resp_data_json:
         if (activity['type'] == "Walk"):
+            #https://developers.google.com/maps/documentation/utilities/polylinealgorithm
             polyl = polyline.decode(activity['map']['summary_polyline'])
             revdRoute = []
             for point in polyl:
+                # gotta reverse the lat log for geo json purpose
                 pt = [point[1],point[0]]
                 revdRoute.append(pt)
             revdroutes.append(revdRoute)
-        #https://developers.google.com/maps/documentation/utilities/polylinealgorithm
 
     return revdroutes
 
+#api endpoint for the getting routes
 @app.route("/getmap")
 def getMap():
     return str(doAllStravaStuff())
