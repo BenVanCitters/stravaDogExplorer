@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Add a line to a map using a GeoJSON source</title>
+        <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+        <link href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css" rel="stylesheet">
+        <script src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"></script>
+            <style>
+            body { margin: 0; padding: 0; }
+            #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+            </style>
+    </head>
+    <body>
+        <div id="map"></div>
+        <script>
+
+
+const userAction = async () => {
+    const response = await fetch('http://localhost:5000/getmap');
+    const myJson = await response.json(); //extract JSON from the http response
+
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYmVudmFuY2l0dGVycyIsImEiOiJja3l3bTh5aWIwYTF5MnRvOWM1dm1ianY1In0.KA_6k94yMtqhUrc5IP03sQ';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: [-87.67970408285899,41.89826133834383],
+        zoom: 15
+    });
+    for( let index in myJson){
+      let routeid = 'route ' + index;
+      // do something with myJson
+      map.on('load', () => {
+            map.addSource( routeid, {
+                'type': 'geojson',
+                'data': {
+                    'type': 'Feature',
+                    'properties': {},
+                    'geometry': {
+                        'type': 'LineString',
+                        'coordinates': myJson[index]
+                    }
+                }
+            });
+            map.addLayer({
+                'id': routeid,
+                'type': 'line',
+                'source': routeid,
+                'layout': {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                'paint': {
+                    'line-color': '#888',
+                    'line-width': 8
+                }
+            });
+        });
+    }
+}
+userAction();
+
+        </script>
+    </body>
+</html>

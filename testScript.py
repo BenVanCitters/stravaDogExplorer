@@ -1,19 +1,64 @@
+
 import http.client
 import json
 import polyline
+import time
 
 
 from flask import Flask
 
 app = Flask(__name__)
 
+# submit a request for a new token
+def refeshToken(refreshToken):
 
-def doAllStravaStuff():
+    f = open("clientInfo.json", "r")
+    client_info = json.loads(f.read())
+    client_id = client_info['client_id']
+    client_secret = client_info['client_secret']
+
     conn = http.client.HTTPSConnection("www.strava.com")
     payload = ''
-    headers = {
-      'Authorization': 'Bearer 99e31cb7683695c133429b0397bec240d4535533'
-    }
+    headers = ''
+    conn.request("POST", f'/api/v3/oauth/token?grant_type=authorization_code&grant_type=refresh_token&refresh_token={refreshToken}&client_id={client_id}&client_secret={client_secret}&', payload, headers)
+    res = conn.getresponse()
+    data = res.read()
+    str_data = data.decode("utf-8")
+
+    new_token = {'access_token': str_data['access_token'],
+                 'expires_at': str_data['expires_at'],
+                 'refresh_token': str_data['refresh_token'],
+                 'expires_in': str_data['refresh_token']}
+    # save the data
+    f = open("tokens.txt", "w")
+    f.write(json.dumps(new_token))
+    f.close()
+
+def loadTokens():
+    f = open("tokens.txt", "r")
+    token_json = json.loads(f.read())
+    expirationTime = token_json['expires_at']
+    accessToken = token_json['access_token']
+    myrefreshToken = token_json['refresh_token']
+
+    print(f'expirationTime: {expirationTime}')
+    now = int(time.time())
+    print(f'now: {now}')
+
+    needsRefresh = (expirationTime < now)
+
+    print(f'needsRefresh: {needsRefresh}')
+    if needsRefresh:
+        refeshToken(myrefreshToken)
+    return accessToken
+
+
+def doAllStravaStuff():
+    token = loadTokens()
+    # print(f'token: {token}')
+    conn = http.client.HTTPSConnection("www.strava.com")
+    payload = ''
+    headers = { f'Authorization': f'Bearer {token}'  }
     conn.request("GET", "/api/v3/athlete/activities", payload, headers)
     res = conn.getresponse()
     data = res.read()
@@ -21,29 +66,28 @@ def doAllStravaStuff():
     str_data = data.decode("utf-8")
     resp_data_json = json.loads(str_data)
     # print(resp_data_json)
-    mything = []
+    revdroutes = []
+
     for activity in resp_data_json:
-        # print(activity)
-        # print(activity['map'])
-
-        polyl = polyline.decode(activity['map']['summary_polyline'])
-        print(f'poly: {polyl}')
-        mything = polyl
+        if (activity['type'] == "Walk"):
+            polyl = polyline.decode(activity['map']['summary_polyline'])
+            revdRoute = []
+            for point in polyl:
+                pt = [point[1],point[0]]
+                revdRoute.append(pt)
+            revdroutes.append(revdRoute)
         #https://developers.google.com/maps/documentation/utilities/polylinealgorithm
-        # print( str(activity['id'] ) + ' - ' + str(activity['name']) + ' - ' + str(activity['type']))
-        # map': {'id': 'a6585569005', 'summary_polyline'
-        break
-        # conn.request("GET", f"/activities/{activity['id']}", payload, headers)
-        # act_res = conn.getresponse()
-        # act_data = act_res.read()
-        #
-        # str_act_data = act_data.decode("utf-8")
-        # resp_actjson = json.loads(str_act_data)
-    return mything
 
+    return revdroutes
+
+@app.route("/getmap")
+def getMap():
+    return str(doAllStravaStuff())
 
 @app.route("/")
-def hello_world():
-    s = doAllStravaStuff()
-    return f'<p>hello {s}</p>'
+def indexFunc():
+    token = loadTokens()
+    print(token)
+    f = open("mapIndex.html", "r")
+    return f.read()
 
