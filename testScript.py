@@ -70,7 +70,7 @@ def doAllStravaStuff():
 
     str_data = data.decode("utf-8")
     resp_data_json = json.loads(str_data)
-    # print(resp_data_json)
+    print(f'rcvd activity count: {len(resp_data_json)}')
     revdroutes = []
 
     for activity in resp_data_json:

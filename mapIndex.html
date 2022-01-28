@@ -25,7 +25,7 @@ const userAction = async () => {
         container: 'map',
         style: 'mapbox://styles/mapbox/streets-v11',
         center: [-87.67970408285899,41.89826133834383],
-        zoom: 15
+        zoom: 14
     });
     for( let index in myJson){
       let routeid = 'route ' + index;
@@ -51,7 +51,9 @@ const userAction = async () => {
                     'line-cap': 'round'
                 },
                 'paint': {
-                    'line-color': '#888',
+                    'line-color': '#DF7A00',
+                    'line-blur': 3,
+                    'line-opacity': 0.6,
                     'line-width': 8
                 }
             });
