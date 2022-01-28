@@ -1,4 +1,3 @@
-
 import http.client
 import json
 import polyline
@@ -9,28 +8,30 @@ app = Flask(__name__)
 
 # submit a request for a new token
 def refeshToken(refreshToken):
+    with open("clientInfo.json", "r")as f:  # Use file to refer to the file object
+        client_info = json.loads(f.read())
+        client_id = client_info['client_id']
+        client_secret = client_info['client_secret']
 
-    f = open("clientInfo.json", "r")
-    client_info = json.loads(f.read())
-    client_id = client_info['client_id']
-    client_secret = client_info['client_secret']
-
-    conn = http.client.HTTPSConnection("www.strava.com")
-    payload = ''
-    headers = ''
-    conn.request("POST", f'/api/v3/oauth/token?grant_type=authorization_code&grant_type=refresh_token&refresh_token={refreshToken}&client_id={client_id}&client_secret={client_secret}&', payload, headers)
-    res = conn.getresponse()
-    data = res.read()
-    str_data = data.decode("utf-8")
-
-    new_token = {'access_token': str_data['access_token'],
-                 'expires_at': str_data['expires_at'],
-                 'refresh_token': str_data['refresh_token'],
-                 'expires_in': str_data['refresh_token']}
-    # save the data
-    f = open("tokens.txt", "w")
-    f.write(json.dumps(new_token))
-    f.close()
+        conn = http.client.HTTPSConnection("www.strava.com")
+        payload = ''
+        headers = ''
+        requestStr = f'/api/v3/oauth/token?grant_type=refresh_token&refresh_token={refreshToken}&client_id={client_id}&client_secret={client_secret}'
+        print(requestStr)
+        conn.request("POST",requestStr)# , payload, headers)
+        res = conn.getresponse()
+        data = res.read()
+        str_data = data.decode("utf-8")
+        print(str_data)
+        json_data = json.loads(str_data)
+        new_token = {'access_token': json_data['access_token'],
+                     'expires_at': json_data['expires_at'],
+                     'refresh_token': json_data['refresh_token'],
+                     'expires_in': json_data['refresh_token']}
+        # save the data
+        f = open("tokens.txt", "w")
+        f.write(json.dumps(new_token))
+        f.close()
 
 def loadTokens():
     f = open("tokens.txt", "r")
@@ -50,7 +51,10 @@ def loadTokens():
         refeshToken(myrefreshToken)
     return accessToken
 
-
+# loads a strava access token then hits the activities endpoint
+# next it grabs the reported list of recorded points then
+# reverses lat/lon so that they can be shown correctly in
+# geo json format and returns a list of lists (each list is a lat lon coords)
 def doAllStravaStuff():
     token = loadTokens()
     # print(f'token: {token}')
@@ -67,6 +71,7 @@ def doAllStravaStuff():
     revdroutes = []
 
     for activity in resp_data_json:
+        #only care about dog "walks"
         if (activity['type'] == "Walk"):
             #https://developers.google.com/maps/documentation/utilities/polylinealgorithm
             polyl = polyline.decode(activity['map']['summary_polyline'])
@@ -84,10 +89,10 @@ def doAllStravaStuff():
 def getMap():
     return str(doAllStravaStuff())
 
+#meant to be the 'home' page
 @app.route("/")
 def indexFunc():
     token = loadTokens()
-    print(token)
     f = open("mapIndex.html", "r")
     return f.read()
 
