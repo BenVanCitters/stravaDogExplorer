@@ -14,8 +14,7 @@ def refeshToken(refreshToken):
         client_secret = client_info['client_secret']
 
         conn = http.client.HTTPSConnection("www.strava.com")
-        payload = ''
-        headers = ''
+
         requestStr = f'/api/v3/oauth/token?grant_type=refresh_token&refresh_token={refreshToken}&client_id={client_id}&client_secret={client_secret}'
         print(requestStr)
         conn.request("POST",requestStr)# , payload, headers)
@@ -50,7 +49,7 @@ def loadTokens():
     if needsRefresh:
         refeshToken(myrefreshToken)
     return accessToken
-
+from datetime import datetime, timedelta
 # loads a strava access token then hits the activities endpoint
 # next it grabs the reported list of recorded points then
 # reverses lat/lon so that they can be shown correctly in
@@ -61,7 +60,11 @@ def doAllStravaStuff():
     conn = http.client.HTTPSConnection("www.strava.com")
     payload = ''
     headers = { f'Authorization': f'Bearer {token}'  }
-    conn.request("GET", "/api/v3/athlete/activities", payload, headers)
+    two_weeks_ago = datetime.now() - timedelta(weeks=2)
+    per_page = 100
+    req_str = f'/api/v3/athlete/activities?after={two_weeks_ago.timestamp()}&per_page={per_page}'
+    print(req_str)
+    conn.request("GET", req_str, payload, headers)
     res = conn.getresponse()
     data = res.read()
 
