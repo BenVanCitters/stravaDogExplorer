@@ -74,14 +74,16 @@ def doAllStravaStuff():
     revdroutes = []
 
     for activity in resp_data_json:
+        actid = activity['id']
+        # print(f'id: {actid}')
         #only care about dog "walks"
         if (activity['type'] == "Walk"):
             #https://developers.google.com/maps/documentation/utilities/polylinealgorithm
             polyl = polyline.decode(activity['map']['summary_polyline'])
             revdRoute = []
             for point in polyl:
-                # gotta reverse the lat log for geo json purpose
-                pt = [point[1],point[0]]
+                # gotta reverse the lat log for geojson purpose
+                pt = [point[1], point[0]]
                 revdRoute.append(pt)
             revdroutes.append(revdRoute)
 
