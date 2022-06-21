@@ -1,5 +1,6 @@
 # Strava Dog Explorer
 Simple app I made connecting strava activities on to a mapbox map.
+![alt text](https://github.com/BenVanCitters/stravaDogExplorer/blob/master/Screen%20Shot%202022-06-21%20at%202.03.56%20AM.png)
 
 The app uses MapBox and Strava to display a map with the last two weeks of dog walks (which I studiously record alongside my faithful woofer, Isaac) all at once to help inspire me vary the routes we walk.
 
