@@ -22,8 +22,12 @@ def refeshToken(refreshToken):
         data = res.read()
         str_data = data.decode("utf-8")
         print(str_data)
+
         json_data = json.loads(str_data)
+        err = json_data["errors"]
+        print(f'Errors: {err}')
         new_token = {'access_token': json_data['access_token'],
+
                      'expires_at': json_data['expires_at'],
                      'refresh_token': json_data['refresh_token'],
                      'expires_in': json_data['refresh_token']}
